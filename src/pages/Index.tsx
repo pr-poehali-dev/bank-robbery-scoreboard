@@ -103,9 +103,22 @@ const Index = () => {
         (newRound[field] as boolean[])[teamIndex] = value;
       }
       newRounds[roundIndex] = newRound;
-      return { rounds: newRounds };
+      return { ...prev, rounds: newRounds };
     });
   };
+
+  if (!gameState.rounds || !gameState.teamNames) {
+    return (
+      <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-[#FF0055] mb-4">Загрузка...</h1>
+          <Button onClick={resetGame} className="bg-[#00F0FF] text-black">
+            Сбросить данные
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const updateTeamName = (index: number, name: string) => {
     setGameState(prev => ({

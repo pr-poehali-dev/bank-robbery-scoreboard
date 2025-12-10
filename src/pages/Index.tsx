@@ -26,11 +26,19 @@ const Index = () => {
   const [gameState, setGameState] = useState<GameState>(() => {
     const saved = localStorage.getItem('bankHeist');
     if (saved) {
-      const parsed = JSON.parse(saved);
-      return {
-        ...parsed,
-        teamNames: parsed.teamNames || DEFAULT_TEAM_NAMES
-      };
+      try {
+        const parsed = JSON.parse(saved);
+        return {
+          rounds: parsed.rounds || Array(5).fill(null).map(() => ({
+            correct: [false, false, false],
+            blitz: [false, false, false],
+            times: [0, 0, 0]
+          })),
+          teamNames: parsed.teamNames || [...DEFAULT_TEAM_NAMES]
+        };
+      } catch (error) {
+        console.error('Failed to parse saved game state:', error);
+      }
     }
     return {
       rounds: Array(5).fill(null).map(() => ({

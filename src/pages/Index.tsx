@@ -15,9 +15,10 @@ interface RoundData {
 
 interface GameState {
   rounds: RoundData[];
+  teamNames: string[];
 }
 
-const TEAM_NAMES = ['Команда Альфа', 'Команда Бета', 'Команда Гамма'];
+const DEFAULT_TEAM_NAMES = ['Команда Альфа', 'Команда Бета', 'Команда Гамма'];
 const ROUND_COEFFICIENTS = [1, 1, 2, 2, 3];
 const PLACE_POINTS = [100, 75, 50];
 
@@ -25,16 +26,23 @@ const Index = () => {
   const [gameState, setGameState] = useState<GameState>(() => {
     const saved = localStorage.getItem('bankHeist');
     if (saved) {
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      return {
+        ...parsed,
+        teamNames: parsed.teamNames || DEFAULT_TEAM_NAMES
+      };
     }
     return {
       rounds: Array(5).fill(null).map(() => ({
         correct: [false, false, false],
         blitz: [false, false, false],
         times: [0, 0, 0]
-      }))
+      })),
+      teamNames: [...DEFAULT_TEAM_NAMES]
     };
   });
+
+  const [editingTeam, setEditingTeam] = useState<number | null>(null);
 
   useEffect(() => {
     localStorage.setItem('bankHeist', JSON.stringify(gameState));
@@ -87,6 +95,13 @@ const Index = () => {
     });
   };
 
+  const updateTeamName = (index: number, name: string) => {
+    setGameState(prev => ({
+      ...prev,
+      teamNames: prev.teamNames.map((n, i) => i === index ? name : n)
+    }));
+  };
+
   const resetGame = () => {
     if (confirm('Сбросить все данные игры?')) {
       const newState = {
@@ -94,14 +109,15 @@ const Index = () => {
           correct: [false, false, false],
           blitz: [false, false, false],
           times: [0, 0, 0]
-        }))
+        })),
+        teamNames: [...DEFAULT_TEAM_NAMES]
       };
       setGameState(newState);
       localStorage.setItem('bankHeist', JSON.stringify(newState));
     }
   };
 
-  const leaderboard = TEAM_NAMES.map((name, idx) => ({
+  const leaderboard = gameState.teamNames.map((name, idx) => ({
     name,
     score: calculateTotalScore(idx),
     index: idx
@@ -148,7 +164,23 @@ const Index = () => {
                   }`}>
                     #{position + 1}
                   </span>
-                  <span className="text-xl font-bold text-white">{team.name}</span>
+                  {editingTeam === team.index ? (
+                    <Input
+                      value={gameState.teamNames[team.index]}
+                      onChange={(e) => updateTeamName(team.index, e.target.value)}
+                      onBlur={() => setEditingTeam(null)}
+                      onKeyDown={(e) => e.key === 'Enter' && setEditingTeam(null)}
+                      className="bg-black/50 border-[#00F0FF] text-white text-xl font-bold h-8 w-64"
+                      autoFocus
+                    />
+                  ) : (
+                    <span 
+                      className="text-xl font-bold text-white cursor-pointer hover:text-[#00F0FF] transition-colors"
+                      onClick={() => setEditingTeam(team.index)}
+                    >
+                      {team.name}
+                    </span>
+                  )}
                 </div>
                 <span className="text-4xl font-black text-[#00F0FF] neon-glow-cyan">
                   {team.score}
@@ -185,7 +217,7 @@ const Index = () => {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {TEAM_NAMES.map((teamName, teamIdx) => {
+                    {gameState.teamNames.map((teamName, teamIdx) => {
                       const placePoints = calculatePlacePoints(roundIdx);
                       const score = calculateRoundScore(roundIdx, teamIdx);
                       

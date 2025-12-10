@@ -45,7 +45,11 @@ const Index = () => {
   const [editingTeam, setEditingTeam] = useState<number | null>(null);
 
   useEffect(() => {
-    localStorage.setItem('bankHeist', JSON.stringify(gameState));
+    try {
+      localStorage.setItem('bankHeist', JSON.stringify(gameState));
+    } catch (error) {
+      console.error('Failed to save game state:', error);
+    }
   }, [gameState]);
 
   const calculatePlacePoints = (roundIndex: number) => {
@@ -66,11 +70,11 @@ const Index = () => {
   const calculateRoundScore = (roundIndex: number, teamIndex: number) => {
     const round = gameState.rounds[roundIndex];
     const correct = round.correct[teamIndex] ? 1 : 0;
-    const blitz = round.blitz[teamIndex] ? 1 : 0;
+    const blitz = round.blitz[teamIndex] ? 2 : 1;
     const coefficient = ROUND_COEFFICIENTS[roundIndex];
     const placePoints = calculatePlacePoints(roundIndex);
     
-    return correct * coefficient * placePoints[teamIndex] * (blitz || 1);
+    return correct * coefficient * placePoints[teamIndex] * blitz;
   };
 
   const calculateTotalScore = (teamIndex: number) => {
